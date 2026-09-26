@@ -29,7 +29,35 @@ const PIECES = [
 
 const exists = (p) => access(p).then(() => true, () => false);
 
+// OpenAI Images API when OPENAI_API_KEY is set (generate + edit), otherwise AI Gateway.
+async function openai(pathname, init) {
+  const res = await fetch(`https://api.openai.com/v1/images/${pathname}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, ...init.headers },
+    body: init.body,
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error?.message ?? `OpenAI ${res.status}`);
+  return Buffer.from(json.data[0].b64_json, "base64");
+}
+
 async function image(content) {
+  const text = content.find((c) => c.type === "text").text;
+  const src = content.find((c) => c.type === "file");
+  if (process.env.OPENAI_API_KEY) {
+    if (!src)
+      return openai("generations", {
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "gpt-image-1", prompt: text, size: "1024x1024", quality: "medium" }),
+      });
+    const fd = new FormData();
+    fd.append("model", "gpt-image-1");
+    fd.append("prompt", text);
+    fd.append("size", "1024x1024");
+    fd.append("quality", "medium");
+    fd.append("image", new Blob([src.data], { type: "image/jpeg" }), "listing.jpg");
+    return openai("edits", { body: fd });
+  }
   const r = await generateText({ model: MODEL, messages: [{ role: "user", content }] });
   const f = r.files.find((x) => x.mediaType.startsWith("image/"));
   if (!f) throw new Error("no image returned");
@@ -64,5 +92,17 @@ async function run(p) {
 
 await mkdir(OUT, { recursive: true });
 const only = process.argv.slice(2);
-const results = await Promise.allSettled(PIECES.filter((p) => !only.length || only.includes(p.slug)).map(run));
-results.forEach((r) => r.status === "rejected" && console.error("fail", r.reason?.message ?? r.reason));
+// 2 pieces at a time, retrying on rate limits (OpenAI image tier: 5 requests/min).
+const queue = PIECES.filter((p) => !only.length || only.includes(p.slug));
+async function worker() {
+  for (let p; (p = queue.shift()); ) {
+    for (let attempt = 1; ; attempt++) {
+      try { await run(p); break; } catch (e) {
+        const msg = e?.message ?? String(e);
+        if (attempt >= 6 || !/rate limit/i.test(msg)) { console.error("fail", p.slug, msg); break; }
+        await new Promise((r) => setTimeout(r, 15_000));
+      }
+    }
+  }
+}
+await Promise.all([worker(), worker()]);

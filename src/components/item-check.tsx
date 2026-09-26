@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { PlusSticker, StarPop } from "./decor";
 import { Photo } from "./photo";
 import { GradeChip, VerdictBadge } from "./ui";
 import { gbp, GRADE_FACTOR } from "@/lib/refund";
@@ -33,6 +34,7 @@ export function ItemCheck({ item: initial, locked }: { item: Item; locked: boole
   const [preview, setPreview] = useState<string | null>(initial.received_photo_url);
   const [compare, setCompare] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fresh, setFresh] = useState(false);
 
   async function run(body: FormData, localPreview: string) {
     setError(null);
@@ -46,6 +48,7 @@ export function ItemCheck({ item: initial, locked }: { item: Item; locked: boole
       if (!res.ok) throw new Error(json.error ?? "Verification failed");
       setItem(json.item);
       setPhase("done");
+      setFresh(true);
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
@@ -72,7 +75,7 @@ export function ItemCheck({ item: initial, locked }: { item: Item; locked: boole
   const defects = done ? item.defects : [];
 
   return (
-    <article className="overflow-hidden rounded-card border border-line bg-white">
+    <article className="rise overflow-hidden rounded-card border-2 border-ink bg-white sticker-shadow" style={{ animationDelay: `${item.position * 90}ms` }}>
       <header className="flex items-center justify-between gap-3 px-4 pt-4">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-wider text-subtle">Piece {item.position}</p>
@@ -97,12 +100,16 @@ export function ItemCheck({ item: initial, locked }: { item: Item; locked: boole
               <p className="text-xs font-semibold text-muted">Not checked</p>
             ) : (
               <>
-                <button
-                  onClick={() => input.current?.click()}
-                  className="w-full rounded-xl bg-fleek px-3 py-3 text-sm font-bold text-ink shadow-sm transition hover:bg-fleek-dark active:scale-95"
-                >
+                <PlusSticker color="#ff2d95" className="float h-9 w-9" />
+                <label className="btn-pop w-full cursor-pointer rounded-xl border-2 border-ink bg-fleek px-3 py-3 text-sm font-extrabold text-ink">
                   Upload received photo
-                </button>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="sr-only"
+                    onChange={(e) => onFile(e.target.files?.[0])}
+                  />
+                </label>
                 {item.demo_arrival_url && (
                   <button onClick={pickSample} className="text-xs font-semibold text-muted underline underline-offset-2 hover:text-ink">
                     or use the sample arrival photo
@@ -118,9 +125,19 @@ export function ItemCheck({ item: initial, locked }: { item: Item; locked: boole
               {phase === "scanning" && (
                 <>
                   <div className="scan-dim" />
-                  <div className="scan-grid" />
+                  <div className="scan-pixels">
+                    {Array.from({ length: 100 }, (_, i) => (
+                      <span
+                        key={i}
+                        style={{
+                          background: (i + Math.floor(i / 10)) % 3 === 0 ? "#4d6bff" : "#ffe34d",
+                          animationDelay: `${((i % 10) + Math.floor(i / 10)) * 60}ms`,
+                        }}
+                      />
+                    ))}
+                  </div>
                   <div className="scan-line" />
-                  <p className="absolute inset-x-0 bottom-3 text-center text-xs font-bold text-white drop-shadow">Scanning for stains, holes, pilling, damage…</p>
+                  <p className="absolute inset-x-0 bottom-3 text-center font-[family-name:var(--font-pixel)] text-[11px] uppercase text-white drop-shadow">Scanning stains · holes · pilling…</p>
                 </>
               )}
               {defects.map((d, i) => (
@@ -152,7 +169,10 @@ export function ItemCheck({ item: initial, locked }: { item: Item; locked: boole
       {done && item.verdict && (
         <div className="space-y-3 border-t border-line px-4 py-4">
           <div className="flex flex-wrap items-center gap-2">
-            <VerdictBadge verdict={item.verdict} />
+            <span className="relative">
+              <VerdictBadge verdict={item.verdict} />
+              {fresh && <StarPop color={item.verdict === "MATCH" ? "#12b76a" : item.verdict === "BELOW_GRADE" ? "#ff2d95" : "#f25c2a"} />}
+            </span>
             {item.true_grade && <GradeChip grade={item.true_grade} label="Arrived" />}
             <span className="text-xs font-semibold text-muted">{Math.round((item.confidence ?? 0) * 100)}% confidence</span>
           </div>

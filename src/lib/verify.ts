@@ -4,10 +4,12 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import type { Analysis, Grade, ListingDefect } from "./types";
 
-const MODEL = process.env.VISION_MODEL ?? "google/gemini-3.5-flash";
-// On Vercel the Gateway authenticates via a per-request OIDC header, so VERCEL itself counts as configured.
+const GATEWAY_MODEL = process.env.VISION_MODEL ?? "google/gemini-3.5-flash";
+const OPENAI_MODEL = process.env.OPENAI_VISION_MODEL ?? "gpt-4.1-mini";
+
+// OpenAI key wins; otherwise Vercel AI Gateway (OIDC arrives per request on Vercel).
 export const aiConfigured = () =>
-  Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN || process.env.VERCEL);
+  Boolean(process.env.OPENAI_API_KEY || process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN || process.env.VERCEL);
 
 const schema = z.object({
   verdict: z.enum(["MATCH", "BELOW_GRADE"]),
@@ -27,6 +29,7 @@ const schema = z.object({
     }),
   ),
 });
+type Raw = z.infer<typeof schema>;
 
 const RUBRIC = `Grading rubric (demo assumption):
 A = no visible defects, minimal wear, resell at full price.
@@ -41,6 +44,57 @@ async function bytes(url: string) {
   return Buffer.from(await res.arrayBuffer());
 }
 
+function prompt(o: { claimed: Grade; itemName: string; disclosed: ListingDefect[] }) {
+  const disclosed = o.disclosed.length ? o.disclosed.map((d) => `- ${d.note}`).join("\n") : "- none";
+  return `You verify secondhand clothing condition for a wholesale marketplace.
+Piece: ${o.itemName}. Claimed grade: ${o.claimed}.
+${RUBRIC}
+Defects the supplier disclosed in the listing:
+${disclosed}
+
+Image 1 is the LISTING photo. Image 2 is the ARRIVAL photo taken by the buyer.
+Find every visible defect on the ARRIVAL photo and draw a tight box around each (x, y, w, h as fractions 0-1 of the image).
+Mark each defect DISCLOSED (visible in listing or disclosed above), WORSENED (was there but is clearly worse) or NEW.
+Verdict MATCH if the piece meets or exceeds the claimed grade; BELOW_GRADE only if new or worsened damage drops it below the claimed grade.
+Estimate the true grade. Be conservative: if the photo is unclear, lower your confidence rather than guessing.`;
+}
+
+async function viaOpenAI(text: string, listing: Buffer, arrival: Buffer): Promise<Raw> {
+  const img = (b: Buffer) => ({ type: "image_url", image_url: { url: `data:image/jpeg;base64,${b.toString("base64")}` } });
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    signal: AbortSignal.timeout(40_000),
+    headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: OPENAI_MODEL,
+      messages: [{ role: "user", content: [{ type: "text", text }, img(listing), img(arrival)] }],
+      response_format: { type: "json_schema", json_schema: { name: "verdict", strict: true, schema: z.toJSONSchema(schema, { target: "draft-7" }) } },
+    }),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error?.message ?? `OpenAI ${res.status}`);
+  return schema.parse(JSON.parse(json.choices[0].message.content));
+}
+
+async function viaGateway(text: string, listing: Buffer, arrival: Buffer): Promise<Raw> {
+  const { output } = await generateText({
+    model: GATEWAY_MODEL,
+    abortSignal: AbortSignal.timeout(40_000),
+    output: Output.object({ schema }),
+    messages: [
+      {
+        role: "user",
+        content: [
+          { type: "text", text },
+          { type: "file", mediaType: "image/jpeg", data: listing },
+          { type: "file", mediaType: "image/jpeg", data: arrival },
+        ],
+      },
+    ],
+  });
+  return output;
+}
+
 export async function analyse(opts: {
   claimed: Grade;
   itemName: string;
@@ -49,40 +103,13 @@ export async function analyse(opts: {
   disclosed: ListingDefect[];
 }): Promise<Analysis> {
   const [listing, arrival] = await Promise.all([bytes(opts.listingUrl), bytes(opts.arrivalUrl)]);
-  const disclosed = opts.disclosed.length ? opts.disclosed.map((d) => `- ${d.note}`).join("\n") : "- none";
-  const { output } = await generateText({
-    model: MODEL,
-    abortSignal: AbortSignal.timeout(40_000),
-    output: Output.object({ schema }),
-    messages: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: `You verify secondhand clothing condition for a wholesale marketplace.
-Piece: ${opts.itemName}. Claimed grade: ${opts.claimed}.
-${RUBRIC}
-Defects the supplier disclosed in the listing:
-${disclosed}
-
-Image 1 is the LISTING photo. Image 2 is the ARRIVAL photo taken by the buyer.
-Find every visible defect on the ARRIVAL photo and draw a tight box around each.
-Mark each defect DISCLOSED (visible in listing or disclosed above), WORSENED (was there but is clearly worse) or NEW.
-Verdict MATCH if the piece meets or exceeds the claimed grade; BELOW_GRADE only if new or worsened damage drops it below the claimed grade.
-Estimate the true grade. Be conservative: if the photo is unclear, lower your confidence rather than guessing.`,
-          },
-          { type: "file", mediaType: "image/jpeg", data: listing },
-          { type: "file", mediaType: "image/jpeg", data: arrival },
-        ],
-      },
-    ],
-  });
+  const text = prompt(opts);
+  const out = process.env.OPENAI_API_KEY ? await viaOpenAI(text, listing, arrival) : await viaGateway(text, listing, arrival);
   return {
-    verdict: output.verdict,
-    true_grade: output.true_grade,
-    confidence: output.confidence,
-    reason: output.reason,
-    defects: output.defects.map(({ x, y, w, h, ...d }) => ({ ...d, bbox: [x, y, w, h] })),
+    verdict: out.verdict,
+    true_grade: out.true_grade,
+    confidence: out.confidence,
+    reason: out.reason,
+    defects: out.defects.map(({ x, y, w, h, ...d }) => ({ ...d, bbox: [x, y, w, h] })),
   };
 }

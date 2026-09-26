@@ -24,7 +24,7 @@ export function ActionButton({
     <button
       disabled={pending}
       onClick={() => start(() => action())}
-      className={`rounded-xl px-5 py-3 text-sm font-bold transition active:scale-95 disabled:opacity-60 ${styles} ${className}`}
+      className={`btn-pop rounded-xl border-2 border-ink px-5 py-3 text-sm font-extrabold disabled:opacity-60 ${styles} ${className}`}
     >
       {pending ? "Working…" : children}
     </button>

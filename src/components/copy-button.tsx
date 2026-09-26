@@ -11,7 +11,7 @@ export function CopyButton({ text }: { text: string }) {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       }}
-      className={`rounded-xl px-5 py-3 text-sm font-bold transition active:scale-95 ${copied ? "bg-match text-white" : "bg-fleek text-ink hover:bg-fleek-dark"}`}
+      className={`btn-pop rounded-xl border-2 border-ink px-5 py-3 text-sm font-extrabold ${copied ? "bg-match text-white" : "bg-fleek text-ink hover:bg-fleek-dark"}`}
     >
       {copied ? "Copied ✓" : "Copy message"}
     </button>

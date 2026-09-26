@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PixelField, PlusSticker, StarBurst } from "@/components/decor";
 import { Photo } from "@/components/photo";
 import { Card, StateChip } from "@/components/ui";
 import { listOrders } from "@/lib/queries";
@@ -14,20 +15,28 @@ export default async function OrdersPage() {
 
   return (
     <div className="space-y-5">
-      <section className="rounded-card bg-fleek p-5">
-        <p className="text-xs font-bold uppercase tracking-wider text-ink/70">Buyer protection, with evidence</p>
-        <h1 className="mt-1 text-2xl font-extrabold leading-tight sm:text-3xl">
-          {toCheck} deliver{toCheck === 1 ? "y" : "ies"} to check
-        </h1>
-        <p className="mt-2 max-w-md text-sm font-medium text-ink/80">
-          Photograph each piece as you unpack it. Second Look compares it with the listing, flags anything below grade and drafts the dispute for you.
-        </p>
+      <section className="rise relative overflow-hidden rounded-card border-2 border-ink bg-fleek p-6 sticker-shadow">
+        <StarBurst className="absolute -right-10 -top-10 h-48 w-48 opacity-90 sm:-right-4 sm:h-56 sm:w-56" />
+        <PixelField className="absolute -bottom-2 right-24 hidden h-16 w-28 sm:block" cols={7} rows={4} />
+        <PlusSticker color="#4d6bff" className="float absolute bottom-4 right-6 h-9 w-9" />
+        <PlusSticker color="#ff2d95" className="float absolute right-40 top-4 hidden h-6 w-6 sm:block" style={{ animationDelay: "1.2s" }} />
+        <div className="relative max-w-md">
+          <p className="font-[family-name:var(--font-pixel)] text-[11px] uppercase tracking-wider text-ink/80">Buyer protection, with receipts</p>
+          <h1 className="mt-1 text-3xl font-black leading-[1.05] sm:text-4xl">
+            {toCheck} deliver{toCheck === 1 ? "y" : "ies"}
+            <br />
+            to check ✦
+          </h1>
+          <p className="mt-3 text-sm font-semibold text-ink/80">
+            Snap each piece as you unpack. We compare it with the listing, flag anything below grade and draft the dispute for you.
+          </p>
+        </div>
       </section>
 
-      <div className="space-y-3">
-        {orders.map((o) => (
-          <Link key={o.id} href={`/order/${o.id}`} className="block transition active:scale-[0.99]">
-            <Card className="overflow-hidden hover:border-fleek">
+      <div className="space-y-4">
+        {orders.map((o, idx) => (
+          <Link key={o.id} href={`/order/${o.id}`} className="rise block" style={{ animationDelay: `${120 + idx * 90}ms` }}>
+            <Card className="lift overflow-hidden border-2 border-ink">
               <div className="flex gap-1 bg-cream p-1">
                 {thumbs.filter((t) => t.order_id === o.id).map((t) => (
                   <Photo key={t.listing_photo_url} src={t.listing_photo_url} alt="" className="aspect-square flex-1 rounded-lg" />

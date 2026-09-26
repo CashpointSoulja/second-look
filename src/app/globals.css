@@ -18,8 +18,40 @@
   --color-below-soft: #fef3f2;
   --color-review: #f25c2a;
   --color-review-soft: #fff4ed;
-  --radius-card: 16px;
+  --color-pink: #ff2d95;
+  --color-pixel-blue: #4d6bff;
+  --color-pixel-yellow: #ffe34d;
+  --color-lime: #6dff4a;
+  --radius-card: 22px;
+  --font-pixel: var(--font-silkscreen), ui-monospace, monospace;
 }
+
+/* ---------- Motion ---------- */
+.spin-slow { animation: spin 40s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.pixel-twinkle { animation: twinkle 3.2s ease-in-out infinite; }
+@keyframes twinkle { 50% { opacity: 0.25; } }
+.float { animation: float 5s ease-in-out infinite; }
+@keyframes float { 50% { transform: translateY(-8px) rotate(8deg); } }
+.rise { animation: rise 0.6s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+.lift { transition: transform 0.25s cubic-bezier(0.2, 0.9, 0.3, 1), box-shadow 0.25s; }
+.lift:hover { transform: translateY(-3px) rotate(-0.3deg); box-shadow: 6px 6px 0 0 var(--color-ink); }
+.sticker-shadow { box-shadow: 4px 4px 0 0 var(--color-ink); }
+.btn-pop { transition: transform 0.15s, box-shadow 0.15s; box-shadow: 3px 3px 0 0 var(--color-ink); }
+.btn-pop:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 0 var(--color-ink); }
+.btn-pop:active { transform: translate(3px, 3px); box-shadow: 0 0 0 0 var(--color-ink); }
+
+.star-pop { animation: star-pop 0.9s cubic-bezier(0.1, 0.8, 0.3, 1) both; margin: -8px 0 0 -8px; }
+@keyframes star-pop {
+  0% { opacity: 1; transform: rotate(var(--a)) translateY(0) scale(0.3); }
+  100% { opacity: 0; transform: rotate(var(--a)) translateY(-70px) scale(1.1); }
+}
+
+/* Pixel wave scan: cells light up in a diagonal wave */
+.scan-pixels { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(10, 1fr); grid-template-rows: repeat(10, 1fr); pointer-events: none; }
+.scan-pixels span { margin: 1px; border-radius: 2px; opacity: 0; animation: pixel-wave 1.5s ease-in-out infinite; }
+@keyframes pixel-wave { 0%, 100% { opacity: 0; transform: scale(0.4); } 35% { opacity: 0.85; transform: scale(1); } 60% { opacity: 0; } }
 
 html { -webkit-tap-highlight-color: transparent; }
 body { background: var(--color-canvas); color: var(--color-ink); }
@@ -61,5 +93,6 @@ body { background: var(--color-canvas); color: var(--color-ink); }
 
 @media (prefers-reduced-motion: reduce) {
   .scan-line { animation: none; top: 40%; }
-  .defect-box, .defect-box::after, .verdict-pop, .scan-grid { animation: none; }
+  .defect-box, .defect-box::after, .verdict-pop, .scan-grid, .spin-slow, .pixel-twinkle, .float, .rise, .star-pop, .scan-pixels span { animation: none; }
+  .scan-pixels span { opacity: 0.3; }
 }
