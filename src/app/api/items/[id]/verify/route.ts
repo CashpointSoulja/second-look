@@ -62,12 +62,13 @@ export async function POST(req: NextRequest, ctx: RouteContext<"/api/items/[id]/
 
   const verdict = finalVerdict(analysis, item.claimed_grade);
   const refund = refundFor(item.unit_price_gbp, item.claimed_grade, analysis.true_grade, verdict);
-  const [updated] = await sql<Item>(
+  const [updated] = await sql<Partial<Row>>(
     `update items set received_photo_url = $2, verdict = $3, true_grade = $4, confidence = $5,
             agent_reason = $6, defects = $7, refund_gbp = $8, source = $9, verified_at = now()
       where id = $1 returning *`,
     [id, arrivalUrl, verdict, analysis.true_grade, analysis.confidence, analysis.reason, JSON.stringify(analysis.defects), refund, source],
   );
+  delete updated.fallback_result; // the scripted answer key never reaches the browser
   await sql("update orders set state = 'VERIFYING' where id = $1 and state = 'DELIVERED'", [item.order_id]);
   return NextResponse.json({ item: updated, note });
 }
