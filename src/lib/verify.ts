@@ -5,7 +5,9 @@ import path from "node:path";
 import type { Analysis, Grade, ListingDefect } from "./types";
 
 const MODEL = process.env.VISION_MODEL ?? "google/gemini-3.5-flash";
-export const aiConfigured = () => Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN);
+// On Vercel the Gateway authenticates via a per-request OIDC header, so VERCEL itself counts as configured.
+export const aiConfigured = () =>
+  Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN || process.env.VERCEL);
 
 const schema = z.object({
   verdict: z.enum(["MATCH", "BELOW_GRADE"]),
