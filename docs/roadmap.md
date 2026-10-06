@@ -33,4 +33,4 @@ Buyer-side check  ──────► Pilot + calibrate  ───────
 
 ## Explicitly not planned
 
-Automatic refunds, binding AI grades, and anything else that removes a human from payout decisions.
+Automatic refunds, binding model grades, and anything else that removes a human from payout decisions.

@@ -102,7 +102,7 @@ export default function PitchPage() {
             <h2 className="text-lg font-extrabold">The bet: buyer-side verification</h2>
             <ul className="list-disc space-y-1 pl-5 text-sm">
               <li>The buyer uploads an arrival photo next to the listing photo and claimed grade.</li>
-              <li>A vision agent flags possible below-grade pieces, explains the visible defects and says how sure it is. Unclear cases go to a person.</li>
+              <li>An image model compares the arrival photo with the listing photo and the disclosed flaws. It flags possible below-grade pieces, explains the visible defects and says how sure it is. Unclear cases go to a person.</li>
               <li>It puts together an evidence pack and an indicative refund for the buyer to review. Nothing is filed or paid out automatically.</li>
             </ul>
           </Card>

@@ -158,7 +158,7 @@ export function ItemCheck({ item: initial, locked }: { item: Item; locked: boole
                 </div>
               ))}
             </div>
-            <figcaption className="text-[11px] font-semibold text-muted">{phase === "scanning" ? "Arrival photo · scanning" : "Arrival photo · areas flagged for review"}</figcaption>
+            <figcaption className="text-[11px] font-semibold text-muted">{phase === "scanning" ? "Image model comparing arrival with listing and disclosed flaws" : "Arrival photo · areas flagged for review"}</figcaption>
           </figure>
         )}
       </div>
@@ -210,7 +210,7 @@ export function ItemCheck({ item: initial, locked }: { item: Item; locked: boole
                 Re-scan with a new photo
               </button>
             )}
-            <span className="ml-auto text-subtle">{item.source === "scripted" ? "Scripted demo verdict (AI not connected)" : "AI verdict · review before sending"}</span>
+            <span className="ml-auto text-subtle">{item.source === "scripted" ? "Scripted demo verdict (image model not connected)" : "Image model verdict · review before sending"}</span>
           </div>
           {compare && item.listing_defects.length > 0 && (
             <p className="rounded-lg bg-canvas px-3 py-2 text-xs text-muted">

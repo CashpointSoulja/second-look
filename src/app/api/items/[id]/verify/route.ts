@@ -50,12 +50,12 @@ export async function POST(req: NextRequest, ctx: RouteContext<"/api/items/[id]/
         disclosed: item.listing_defects,
       });
     } catch (e) {
-      note = e instanceof Error ? e.message : "AI unavailable";
-      console.error("verify: AI failed, using scripted fallback", note);
+      note = e instanceof Error ? e.message : "Image model unavailable";
+      console.error("verify: image model failed, using scripted fallback", note);
     }
   }
   if (!analysis) {
-    if (!item.fallback_result) return NextResponse.json({ error: "AI unavailable and no scripted verdict" }, { status: 503 });
+    if (!item.fallback_result) return NextResponse.json({ error: "Image model unavailable and no scripted verdict" }, { status: 503 });
     analysis = item.fallback_result;
     source = "scripted";
   }
