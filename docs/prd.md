@@ -31,9 +31,9 @@ Evidence is anecdotal, not measured: see the Trustpilot and Reddit quotes in the
 ## 3. Goals
 
 - **G1.** A buyer can go from the last arrival photo to an evidence-ready dispute pack in under 2 minutes during the demo. The pilot will measure this against a pack made by hand.
-- **G2.** Every flagged piece shows: the listing photo and arrival photo side by side, where the defects are, whether each defect is *new*, *worse* or *disclosed*, the AI's reasoning, and the refund maths.
+- **G2.** Every flagged piece shows: the listing photo and arrival photo side by side, where the defects are, whether each defect is *new*, *worse* or *disclosed*, the image model's reasoning, and the refund maths.
 - **G3.** Suppliers only pay for damage that was new or got worse. Disclosed flaws never count toward a refund.
-- **G4.** The demo runs live on a public URL even with no AI credentials, using a scripted fallback.
+- **G4.** The demo runs live on a public URL even with no image model connected, using a scripted fallback.
 
 ## 4. Non-goals (this version)
 

@@ -17,7 +17,7 @@ Second Look adds the missing check at receipt, piece by piece. The full problem 
 ## How it works
 
 ```
-Upload arrival photo ─► scan animation ─► AI compares listing vs arrival
+Upload arrival photo ─► scan animation ─► image model compares arrival vs listing
       │                                   (claimed grade + disclosed flaws)
       ▼
 Defects boxed: NEW · WORSENED · DISCLOSED ─► verdict MATCH / BELOW GRADE / NEEDS REVIEW
@@ -50,7 +50,7 @@ The full talk track is in [docs/demo-script.md](docs/demo-script.md).
 |---|---|
 | [One-pager](docs/one-pager.md) | Problem brief in buyers' own words |
 | [PRD](docs/prd.md) | Problem, goals, non-goals, user stories, acceptance criteria, metrics |
-| [RFC](docs/rfc.md) | Architecture, data model, AI contract, fallback, security, limits |
+| [RFC](docs/rfc.md) | Architecture, data model, image model contract, fallback, security, limits |
 | [Roadmap](docs/roadmap.md) | Now / Next / Later bets with dates |
 | [Demo script](docs/demo-script.md) | Launch artifact: the 2-minute walkthrough |
 | [Caveats](docs/caveats.md) | Hosting, synthetic data and non-affiliation notes |
@@ -58,15 +58,15 @@ The full talk track is in [docs/demo-script.md](docs/demo-script.md).
 
 ## Stack
 
-Next.js 16 (App Router, TypeScript, Tailwind v4) on **Vercel** · **Neon Postgres** (Vercel Marketplace) · **Vercel Blob** for photos · **Vercel AI Gateway** (`google/gemini-3.5-flash` by default) via the AI SDK, with structured output.
+Next.js 16 (App Router, TypeScript, Tailwind v4) on **Vercel** · **Neon Postgres** (Vercel Marketplace) · **Vercel Blob** for photos · an **image model** through Vercel AI Gateway (set with `VISION_MODEL`), with structured output.
 
-If there are no AI credentials, the app falls back to scripted verdicts, clearly labelled, so the demo always runs.
+If no image model is connected, the app falls back to scripted verdicts, clearly labelled "Scripted demo verdict (image model not connected)", so the demo always runs. The live demo runs in that mode.
 
 ## Run it
 
 ```bash
 pnpm install
-vercel link && vercel env pull .env.local   # Neon, Blob and AI Gateway (OIDC) variables
+vercel link && vercel env pull .env.local   # Neon, Blob and image model (OIDC) variables
 pnpm db:seed                                 # applies db/migrations/*.sql, then db/seed.sql
 pnpm dev
 ```
