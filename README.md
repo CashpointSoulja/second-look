@@ -53,6 +53,8 @@ The full talk track is in [docs/demo-script.md](docs/demo-script.md).
 | [RFC](docs/rfc.md) | Architecture, data model, AI contract, fallback, security, limits |
 | [Roadmap](docs/roadmap.md) | Now / Next / Later bets with dates |
 | [Demo script](docs/demo-script.md) | Launch artifact: the 2-minute walkthrough |
+| [Caveats](docs/caveats.md) | Hosting, synthetic data and non-affiliation notes |
+| [Walkthrough video](public/media/second-look-walkthrough.mp4) | 89-second vertical walkthrough of the live site |
 
 ## Stack
 
